@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lebesgue vs Riemann Integration</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript">
+        function computeIntegrals() {
+            function riemannIntegral(func, a, b, numPoints) {
+                const dx = (b - a) / numPoints;
+                let result = 0;
+                for (let i = 0; i < numPoints; i++) {
+                    const x = a + i * dx;
+                    result += func(x) * dx;
+                }
+                return result;
+            }
+
+            function lebesgueIntegral(func, a, b, numPoints) {
+                const dx = (b - a) / numPoints;
+                const cdf = (x) => x; // Dummy CDF function for demonstration
+                let result = 0;
+                for (let i = 0; i < numPoints; i++) {
+                    const x = a + i * dx;
+                    const gx = cdf(x);
+                    const gxPrev = cdf(x - dx);
+                    result += func(x) * (gx - gxPrev);
+                }
+                return result;
+            }
+
+            function computeMeanAndVariance(func, a, b, numPoints) {
+                const mean = riemannIntegral((x) => x * func(x), a, b, numPoints);
+                const meanSquare = riemannIntegral((x) => x * x * func(x), a, b, numPoints);
+                const variance = meanSquare - mean * mean;
+                return { mean, variance };
+            }
+
+            // Retrieve inputs from the form
+            const selectedFunction = document.getElementById("function-select").value;
+            const a = parseFloat(document.getElementById("lower-bound").value);
+            const b = parseFloat(document.getElementById("upper-bound").value);
+            const numPoints = parseInt(document.getElementById("intervals").value);
+
+            // Define the selected function
+            let userFunc;
+            switch (selectedFunction) {
+                case "sin":
+                    userFunc = Math.sin;
+                    break;
+                case "cos":
+                    userFunc = Math.cos;
+                    break;
+                case "x2":
+                    userFunc = (x) => x * x;
+                    break;
+                default:
+                    alert("Invalid function selected.");
+                    return;
+            }
+
+            // Perform calculations
+            const riemannResult = riemannIntegral(userFunc, a, b, numPoints);
+            const lebesgueResult = lebesgueIntegral(userFunc, a, b, numPoints);
+            const { mean, variance } = computeMeanAndVariance(userFunc, a, b, numPoints);
+
+            // Display results
+            document.getElementById('results').innerHTML = `
+                <p>Riemann Integral: ${riemannResult.toFixed(6)}</p>
+                <p>Lebesgue Integral: ${lebesgueResult.toFixed(6)}</p>
+                <p>Mean: ${mean.toFixed(6)}</p>
+                <p>Variance: ${variance.toFixed(6)}</p>
+            `;
+        }
+    </script>
+</head>
+<body>
+    <h1>Lebesgue vs Riemann Integration</h1>
+    <p>Select a function and input the integration parameters to compute integrals, mean, and variance.</p>
+    <form onsubmit="computeIntegrals(); return false;">
+        <label for="function-select">Select a function:</label>
+        <select id="function-select">
+            <option value="sin">sin(x)</option>
+            <option value="cos">cos(x)</option>
+            <option value="x2">x^2</option>
+        </select><br><br>
+
+        <label for="lower-bound">Lower bound:</label>
+        <input type="number" id="lower-bound" required><br><br>
+
+        <label for="upper-bound">Upper bound:</label>
+        <input type="number" id="upper-bound" required><br><br>
+
+        <label for="intervals">Number of intervals:</label>
+        <input type="number" id="intervals" required><br><br>
+
+        <button type="submit">Compute</button>
+    </form>
+
+    <div id="results"></div>
+</body>
+</html>
